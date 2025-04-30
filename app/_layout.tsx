@@ -17,11 +17,11 @@ export default function Layout() {
           tabBarIcon: ({ color, size }) => {
             let iconName: keyof typeof Ionicons.glyphMap = 'home';
             if (route.name === 'index') iconName = 'home';
-            else if (route.name === 'cadastro') iconName = 'add-circle';
             else if (route.name === 'scanner') iconName = 'qr-code';
             else if (route.name === 'editar') iconName = 'create';
             else if (route.name === 'mapa') iconName = 'map';
             else if (route.name === 'devs') iconName = 'people';
+            
             return <Ionicons name={iconName} size={size} color={color} />;
           },
         })}
