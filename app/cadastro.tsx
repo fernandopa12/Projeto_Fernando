@@ -21,23 +21,18 @@ export default function CadastroScreen() {
     placa: '',
   });
 
-  // Carregar dados do AsyncStorage ao iniciar o app
   useEffect(() => {
     const carregarDados = async () => {
       try {
         const dadosSalvos = await AsyncStorage.getItem('moto');
-        if (dadosSalvos) {
-          setMoto(JSON.parse(dadosSalvos));
-        }
+        if (dadosSalvos) setMoto(JSON.parse(dadosSalvos));
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
       }
     };
-
     carregarDados();
   }, []);
 
-  // Salvar dados no AsyncStorage sempre que o formulário for alterado
   useEffect(() => {
     const salvarDados = async () => {
       try {
@@ -46,7 +41,6 @@ export default function CadastroScreen() {
         console.error('Erro ao salvar dados:', error);
       }
     };
-
     salvarDados();
   }, [moto]);
 
@@ -71,9 +65,7 @@ export default function CadastroScreen() {
     try {
       const response = await fetch('http://192.168.0.100:8080/motos', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(moto),
       });
 
@@ -98,7 +90,7 @@ export default function CadastroScreen() {
           key={field}
           style={styles.input}
           placeholder={`Digite o ${field}`}
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#ccc"
           value={(moto as any)[field]}
           onChangeText={(value) => handleChange(field as keyof typeof moto, value)}
         />
@@ -109,8 +101,8 @@ export default function CadastroScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity onPress={limparCampos} style={styles.clearButton}>
-        <MaterialIcons name="delete-forever" size={24} color="#fff" />
-        <Text style={styles.clearButtonText}>Limpar Campos</Text>
+        <MaterialIcons name="delete-outline" size={20} color="#fff" />
+        <Text style={styles.clearButtonText}>Limpar</Text>
       </TouchableOpacity>
 
       <View style={styles.previewBox}>
@@ -128,27 +120,30 @@ export default function CadastroScreen() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#000000FF',
+    backgroundColor: '#000',
     padding: 20,
     alignItems: 'center',
   },
   title: {
     fontSize: 20,
     color: '#00BFFF',
-    fontWeight: '500',
-    marginBottom: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
   },
   input: {
     width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a1a',
+    borderColor: '#333',
+    borderWidth: 1,
     marginBottom: 10,
     padding: 12,
     borderRadius: 8,
-    fontSize: 16,
+    fontSize: 15,
+    color: '#fff',
   },
   button: {
     backgroundColor: '#00BFFF',
-    padding: 15,
+    padding: 14,
     borderRadius: 10,
     width: '100%',
     marginTop: 10,
@@ -156,24 +151,24 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
   clearButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#444',
-    padding: 12,
-    borderRadius: 10,
+    padding: 10,
+    borderRadius: 8,
     marginTop: 10,
   },
   clearButtonText: {
     color: '#fff',
-    marginLeft: 8,
-    fontSize: 16,
+    marginLeft: 6,
+    fontSize: 15,
   },
   previewBox: {
-    marginTop: 30,
+    marginTop: 25,
     backgroundColor: '#111',
     padding: 15,
     borderRadius: 10,
@@ -181,13 +176,13 @@ const styles = StyleSheet.create({
   },
   previewTitle: {
     color: '#00BFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: 'bold',
     marginBottom: 10,
   },
   previewText: {
-    color: '#fff',
+    color: '#ccc',
     fontSize: 14,
-    marginBottom: 4,
+    marginBottom: 3,
   },
 });

@@ -44,12 +44,14 @@ const styles = StyleSheet.create({
     userInfo: {
       flexDirection: "row",
       alignItems: "center",
+      gap: 10,
     },
     avatar: {
       width: 44,
       height: 44,
       borderRadius: 100,
       marginRight: 10,
+
     },
     name: {
       color: "white",
@@ -67,6 +69,6 @@ const styles = StyleSheet.create({
     icon: {
       width: 24,
       height: 24,
-      marginLeft: 10,
+      marginLeft: 15,
     },
   });

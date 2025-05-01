@@ -4,8 +4,9 @@ import { Ionicons, MaterialIcons, Entypo } from '@expo/vector-icons';
 export default function Layout() {
   return (
     <Tabs screenOptions={{ headerShown: false }}>
-       <Tabs.Screen
-        name="index" // ✅ agora a primeira aba usa index.tsx
+      
+      <Tabs.Screen
+        name="index"
         options={{
           title: 'Início',
           tabBarIcon: ({ color, size }) => (
@@ -13,6 +14,7 @@ export default function Layout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="cadastro"
         options={{
@@ -22,6 +24,7 @@ export default function Layout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="scanner"
         options={{
@@ -31,6 +34,7 @@ export default function Layout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="mapa"
         options={{
@@ -40,6 +44,7 @@ export default function Layout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="devs"
         options={{
@@ -49,6 +54,7 @@ export default function Layout() {
           ),
         }}
       />
+      
     </Tabs>
   );
 }
