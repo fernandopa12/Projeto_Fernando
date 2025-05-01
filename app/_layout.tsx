@@ -1,31 +1,54 @@
 import { Tabs } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import { Ionicons, MaterialIcons, Entypo } from '@expo/vector-icons';
 
 export default function Layout() {
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
-      <Tabs
-        screenOptions={({ route }) => ({
-          tabBarStyle: { backgroundColor: 'black', borderTopColor: '#111' },
-          tabBarActiveTintColor: '#00BFFF',
-          tabBarInactiveTintColor: '#888',
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => {
-            let iconName: keyof typeof Ionicons.glyphMap = 'home';
-            if (route.name === 'index') iconName = 'home';
-            else if (route.name === 'scanner') iconName = 'qr-code';
-            else if (route.name === 'editar') iconName = 'create';
-            else if (route.name === 'mapa') iconName = 'map';
-            else if (route.name === 'devs') iconName = 'people';
-            
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-        })}
+    <Tabs screenOptions={{ headerShown: false }}>
+       <Tabs.Screen
+        name="index" // ✅ agora a primeira aba usa index.tsx
+        options={{
+          title: 'Início',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
+        }}
       />
-    </SafeAreaProvider>
+      <Tabs.Screen
+        name="cadastro"
+        options={{
+          title: 'Cadastrar',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="add-circle-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="scanner"
+        options={{
+          title: 'Escanear',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="qr-code-scanner" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="mapa"
+        options={{
+          title: 'Mapa',
+          tabBarIcon: ({ color, size }) => (
+            <Entypo name="map" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="devs"
+        options={{
+          title: 'Devs',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="people-outline" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }
