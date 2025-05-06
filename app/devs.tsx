@@ -5,7 +5,7 @@ import DevCard from "../components/DevCard";
 
 const profiles = [
   {
-    name: "Gabi Macedo",
+    name: "Gabrielly Macedo",
     username: "gabimaced0",
     image: require("../assets/gabimacedo-pic.png"),
     linkedin:
@@ -19,6 +19,14 @@ const profiles = [
     linkedin:
       "https://www.linkedin.com/in/fernando-henrique-vilela-aguiar-322aa2301/",
     github: "https://github.com/fernando1211",
+  },
+  {
+    name: "Rafael Magalhães ",
+    username: "RafaMacoto",
+    image: require("../assets/rafamocoto.jpg"),
+    linkedin:
+      "http://linkedin.com/in/rafael-macoto",
+    github: "https://github.com/RafaMacoto",
   },
 ];
 

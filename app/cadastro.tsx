@@ -8,12 +8,20 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function CadastroScreen() {
-  const [moto, setMoto] = useState({
-    id: '',
+type Moto = {
+  id?: number;
+  modelo: string;
+  status: string;
+  posicao: string;
+  problema: string;
+  placa: string;
+};
+
+export default function Cadastro() {
+  const [moto, setMoto] = useState<Moto>({
     modelo: '',
     status: '',
     posicao: '',
@@ -21,44 +29,56 @@ export default function CadastroScreen() {
     placa: '',
   });
 
+  const [listaMotos, setListaMotos] = useState<Moto[]>([]);
+  const [ultimaMoto, setUltimaMoto] = useState<Moto | null>(null);
+
   useEffect(() => {
-    const carregarDados = async () => {
-      try {
-        const dadosSalvos = await AsyncStorage.getItem('moto');
-        if (dadosSalvos) setMoto(JSON.parse(dadosSalvos));
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-      }
-    };
-    carregarDados();
+    listarMotos();
+    carregarUltimaMoto();
   }, []);
 
-  useEffect(() => {
-    const salvarDados = async () => {
-      try {
-        await AsyncStorage.setItem('moto', JSON.stringify(moto));
-      } catch (error) {
-        console.error('Erro ao salvar dados:', error);
-      }
-    };
-    salvarDados();
-  }, [moto]);
+  const listarMotos = async () => {
+    try {
+      const response = await fetch('http://192.168.0.100:8080/motos');
+      const data = await response.json();
+      const motos = data.content || data;
+      setListaMotos(motos);
+      await AsyncStorage.setItem('listaMotos', JSON.stringify(motos));
+    } catch (error) {
+      console.error('Erro ao buscar motos:', error);
+    }
+  };
 
-  const handleChange = (field: keyof typeof moto, value: string) => {
+  const carregarUltimaMoto = async () => {
+    try {
+      const json = await AsyncStorage.getItem('ultimaMoto');
+      if (json) setUltimaMoto(JSON.parse(json));
+    } catch (error) {
+      console.error('Erro ao carregar última moto do AsyncStorage', error);
+    }
+  };
+
+  const salvarMotosLocal = async (motos: Moto[]) => {
+    try {
+      await AsyncStorage.setItem('listaMotos', JSON.stringify(motos));
+    } catch (error) {
+      console.error('Erro ao salvar lista no AsyncStorage', error);
+    }
+  };
+
+  const handleChange = (field: string, value: string) => {
     setMoto({ ...moto, [field]: value });
   };
 
   const limparCampos = () => {
-    const vazio = {
-      id: '',
+    setMoto({
+      id: undefined,
       modelo: '',
       status: '',
       posicao: '',
       problema: '',
       placa: '',
-    };
-    setMoto(vazio);
-    AsyncStorage.removeItem('moto');
+    });
   };
 
   const cadastrarMoto = async () => {
@@ -71,7 +91,10 @@ export default function CadastroScreen() {
 
       if (response.ok) {
         Alert.alert('Sucesso', 'Moto cadastrada com sucesso!');
+        await AsyncStorage.setItem('ultimaMoto', JSON.stringify(moto));
+        setUltimaMoto(moto);
         limparCampos();
+        await listarMotos();
       } else {
         Alert.alert('Erro', 'Erro ao cadastrar a moto');
       }
@@ -81,23 +104,56 @@ export default function CadastroScreen() {
     }
   };
 
+  const editarMoto = async (motoEditada: Moto) => {
+    if (!motoEditada.id) {
+      Alert.alert('Erro', 'Moto não possui ID para edição.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://192.168.0.100:8080/motos/${motoEditada.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(motoEditada),
+      });
+
+      if (response.ok) {
+        Alert.alert('Sucesso', 'Moto editada com sucesso!');
+        const novaLista = listaMotos.map((m) =>
+          m.id === motoEditada.id ? motoEditada : m
+        );
+        setListaMotos(novaLista);
+        await salvarMotosLocal(novaLista);
+        limparCampos();
+      } else {
+        Alert.alert('Erro', 'Erro ao editar a moto');
+      }
+    } catch (error) {
+      console.error('Erro ao editar moto:', error);
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>📋 Cadastro de Moto</Text>
 
-      {['id', 'modelo', 'status', 'posicao', 'problema', 'placa'].map((field) => (
+      {['modelo', 'status', 'posicao', 'problema', 'placa'].map((field) => (
         <TextInput
           key={field}
           style={styles.input}
-          placeholder={`Digite o ${field}`}
+          placeholder={`Digite ${field}`}
           placeholderTextColor="#ccc"
           value={(moto as any)[field]}
-          onChangeText={(value) => handleChange(field as keyof typeof moto, value)}
+          onChangeText={(value) => handleChange(field, value)}
         />
       ))}
 
-      <TouchableOpacity onPress={cadastrarMoto} style={styles.button}>
-        <Text style={styles.buttonText}>Cadastrar Moto ➕</Text>
+      <TouchableOpacity
+        onPress={moto.id ? () => editarMoto(moto) : cadastrarMoto}
+        style={styles.button}>
+        <Text style={styles.buttonText}>
+          {moto.id ? 'Salvar Alterações' : 'Cadastrar Moto'}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={limparCampos} style={styles.clearButton}>
@@ -106,11 +162,21 @@ export default function CadastroScreen() {
       </TouchableOpacity>
 
       <View style={styles.previewBox}>
-        <Text style={styles.previewTitle}>📄 Dados Digitados:</Text>
-        {Object.entries(moto).map(([key, value]) => (
-          <Text key={key} style={styles.previewText}>
-            {key}: {value || '(vazio)'}
-          </Text>
+        <Text style={styles.previewTitle}>📄 Lista de Motos:</Text>
+        {listaMotos.map((m, index) => (
+          <View key={m.id ?? index} style={{ marginBottom: 12 }}>
+            <Text style={styles.previewText}>Modelo: {m.modelo}</Text>
+            <Text style={styles.previewText}>Status: {m.status}</Text>
+            <Text style={styles.previewText}>Posição: {m.posicao}</Text>
+            <Text style={styles.previewText}>Problema: {m.problema}</Text>
+            <Text style={styles.previewText}>Placa: {m.placa}</Text>
+
+            <TouchableOpacity
+              onPress={() => setMoto(m)}
+              style={styles.editButton}>
+              <Text style={{ color: '#fff' }}>Editar</Text>
+            </TouchableOpacity>
+          </View>
         ))}
       </View>
     </ScrollView>
@@ -184,5 +250,13 @@ const styles = StyleSheet.create({
     color: '#ccc',
     fontSize: 14,
     marginBottom: 3,
+  },
+  editButton: {
+    marginTop: 5,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#555',
+    borderRadius: 6,
   },
 });
