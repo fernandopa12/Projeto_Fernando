@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 
 type Moto = {
   id?: number;
@@ -18,6 +19,7 @@ type Moto = {
   posicao: string;
   problema: string;
   placa: string;
+  
 };
 
 export default function Cadastro() {
@@ -27,6 +29,7 @@ export default function Cadastro() {
     posicao: '',
     problema: '',
     placa: '',
+    
   });
 
   const [listaMotos, setListaMotos] = useState<Moto[]>([]);
@@ -39,7 +42,7 @@ export default function Cadastro() {
 
   const listarMotos = async () => {
     try {
-      const response = await fetch('http://192.168.0.100:8080/motos');
+      const response = await fetch('http://10.0.2.2:8080/motos');
       const data = await response.json();
       const motos = data.content || data;
       setListaMotos(motos);
@@ -83,7 +86,7 @@ export default function Cadastro() {
 
   const cadastrarMoto = async () => {
     try {
-      const response = await fetch('http://192.168.0.100:8080/motos', {
+      const response = await fetch('http://10.0.2.2:8080/motos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(moto),
@@ -111,7 +114,7 @@ export default function Cadastro() {
     }
 
     try {
-      const response = await fetch(`http://192.168.0.100:8080/motos/${motoEditada.id}`, {
+      const response = await fetch(`http://10.0.2.2:8080/motos/${motoEditada.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(motoEditada),
@@ -133,11 +136,32 @@ export default function Cadastro() {
     }
   };
 
+  const excluirMoto = async (id?: number) => {
+    if (!id) return;
+
+    try {
+      const response = await fetch(`http://10.0.2.2:8080/motos/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        Alert.alert('Sucesso', 'Moto excluída com sucesso!');
+        const novaLista = listaMotos.filter((m) => m.id !== id);
+        setListaMotos(novaLista);
+        await salvarMotosLocal(novaLista);
+      } else {
+        Alert.alert('Erro', 'Erro ao excluir moto');
+      }
+    } catch (error) {
+      console.error('Erro ao excluir moto:', error);
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>📋 Cadastro de Moto</Text>
 
-      {['modelo', 'status', 'posicao', 'problema', 'placa'].map((field) => (
+      {['modelo', 'posicao', 'problema', 'placa'].map((field) => (
         <TextInput
           key={field}
           style={styles.input}
@@ -148,9 +172,26 @@ export default function Cadastro() {
         />
       ))}
 
+      
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={moto.status}
+          onValueChange={(value) => handleChange('status', value)}
+          dropdownIconColor="#fff"
+          style={styles.picker}
+        >
+          <Picker.Item label="Selecione o status" value="" />
+          <Picker.Item label="DISPONIVEL" value="DISPONIVEL" />
+          <Picker.Item label="MANUTENCAO" value="MANUTENCAO" />
+          <Picker.Item label="INDISPONIVEL" value="INDISPONIVEL" />
+          <Picker.Item label="RECUPERACAO" value="RECUPERACAO" />
+        </Picker>
+      </View>
+
       <TouchableOpacity
         onPress={moto.id ? () => editarMoto(moto) : cadastrarMoto}
-        style={styles.button}>
+        style={styles.button}
+      >
         <Text style={styles.buttonText}>
           {moto.id ? 'Salvar Alterações' : 'Cadastrar Moto'}
         </Text>
@@ -171,11 +212,27 @@ export default function Cadastro() {
             <Text style={styles.previewText}>Problema: {m.problema}</Text>
             <Text style={styles.previewText}>Placa: {m.placa}</Text>
 
-            <TouchableOpacity
-              onPress={() => setMoto(m)}
-              style={styles.editButton}>
-              <Text style={{ color: '#fff' }}>Editar</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+              <TouchableOpacity onPress={() => setMoto(m)} style={styles.editButton}>
+                <Text style={{ color: '#fff' }}>Editar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() =>
+                  Alert.alert(
+                    'Excluir Moto',
+                    'Tem certeza que deseja excluir esta moto?',
+                    [
+                      { text: 'Cancelar', style: 'cancel' },
+                      { text: 'Excluir', onPress: () => excluirMoto(m.id), style: 'destructive' },
+                    ]
+                  )
+                }
+                style={[styles.editButton, { backgroundColor: '#aa2222' }]}
+              >
+                <Text style={{ color: '#fff' }}>Excluir</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ))}
       </View>
@@ -206,6 +263,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     fontSize: 15,
     color: '#fff',
+  },
+  pickerContainer: {
+    backgroundColor: '#1a1a1a',
+    borderColor: '#333',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 10,
+    width: '100%',
+  },
+  picker: {
+    color: '#fff',
+    height: 50,
+    width: '100%',
   },
   button: {
     backgroundColor: '#00BFFF',
@@ -252,8 +322,6 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   editButton: {
-    marginTop: 5,
-    alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 5,
     backgroundColor: '#555',
