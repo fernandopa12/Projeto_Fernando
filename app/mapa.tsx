@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Dimensions} from 'react-native';
+import { View, Text, StyleSheet, FlatList, Dimensions } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
 const NUM_ROWS = 10;
@@ -18,11 +18,10 @@ const Mapa: React.FC = () => {
   const labels = generateLabels();
 
   const renderItem = ({ item }: { item: string }) => {
-    // Define the background color based on the selected option
-    const backgroundColor = selectedOption === 'MANUTENCAO' ? 'green' : 'red';
-    
+    const borderColor = selectedOption === 'MANUTENCAO' ? 'green' : 'red';
+
     return (
-      <View style={[styles.box, { backgroundColor }]}>
+      <View style={[styles.box, { borderColor }]}>
         <Text style={styles.text}>{item}</Text>
       </View>
     );
@@ -30,7 +29,6 @@ const Mapa: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Escolha a Opção:</Text>
       <Picker
         selectedValue={selectedOption}
         onValueChange={(itemValue) => setSelectedOption(itemValue)}
@@ -59,16 +57,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     backgroundColor: 'black',
   },
-  title: {
-    fontSize: 18,
-    color: 'white',
-    marginBottom: 10,
-  },
   picker: {
     height: 50,
     width: '100%',
     color: 'white',
     backgroundColor: 'black',
+    
   },
   grid: {
     alignItems: 'center',
@@ -76,11 +70,11 @@ const styles = StyleSheet.create({
   box: {
     width: Dimensions.get('window').width / NUM_COLUMNS - 20,
     height: 70,
-    borderWidth: 1,
-    borderColor: 'blue',
+    borderWidth: 3,
     alignItems: 'center',
     justifyContent: 'center',
     margin: 5,
+    backgroundColor: 'black', // mantém o fundo neutro
   },
   text: {
     fontSize: 14,
