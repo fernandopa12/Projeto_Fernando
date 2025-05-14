@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -19,8 +19,10 @@ type Moto = {
   posicao: string;
   problema: string;
   placa: string;
-  
 };
+
+const CAMPOS_FORM = ['modelo', 'posicao', 'problema', 'placa'] as const;
+const STATUS_OPTIONS = ['DISPONIVEL', 'MANUTENCAO', 'INDISPONIVEL', 'RECUPERACAO'];
 
 export default function Cadastro() {
   const [moto, setMoto] = useState<Moto>({
@@ -29,7 +31,6 @@ export default function Cadastro() {
     posicao: '',
     problema: '',
     placa: '',
-    
   });
 
   const [listaMotos, setListaMotos] = useState<Moto[]>([]);
@@ -40,7 +41,7 @@ export default function Cadastro() {
     carregarUltimaMoto();
   }, []);
 
-  const listarMotos = async () => {
+  const listarMotos = useCallback(async () => {
     try {
       const response = await fetch('http://10.0.2.2:8080/motos');
       const data = await response.json();
@@ -50,16 +51,16 @@ export default function Cadastro() {
     } catch (error) {
       console.error('Erro ao buscar motos:', error);
     }
-  };
+  }, []);
 
-  const carregarUltimaMoto = async () => {
+  const carregarUltimaMoto = useCallback(async () => {
     try {
       const json = await AsyncStorage.getItem('ultimaMoto');
       if (json) setUltimaMoto(JSON.parse(json));
     } catch (error) {
-      console.error('Erro ao carregar última moto do AsyncStorage', error);
+      console.error('Erro ao carregar última moto:', error);
     }
-  };
+  }, []);
 
   const salvarMotosLocal = async (motos: Moto[]) => {
     try {
@@ -69,8 +70,8 @@ export default function Cadastro() {
     }
   };
 
-  const handleChange = (field: string, value: string) => {
-    setMoto({ ...moto, [field]: value });
+  const handleChange = (field: keyof Moto, value: string) => {
+    setMoto((prev) => ({ ...prev, [field]: value }));
   };
 
   const limparCampos = () => {
@@ -97,7 +98,7 @@ export default function Cadastro() {
         await AsyncStorage.setItem('ultimaMoto', JSON.stringify(moto));
         setUltimaMoto(moto);
         limparCampos();
-        await listarMotos();
+        listarMotos();
       } else {
         Alert.alert('Erro', 'Erro ao cadastrar a moto');
       }
@@ -161,18 +162,17 @@ export default function Cadastro() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>📋 Cadastro de Moto</Text>
 
-      {['modelo', 'posicao', 'problema', 'placa'].map((field) => (
+      {CAMPOS_FORM.map((field) => (
         <TextInput
           key={field}
           style={styles.input}
           placeholder={`Digite ${field}`}
           placeholderTextColor="#ccc"
-          value={(moto as any)[field]}
+          value={moto[field]}
           onChangeText={(value) => handleChange(field, value)}
         />
       ))}
 
-      
       <View style={styles.pickerContainer}>
         <Picker
           selectedValue={moto.status}
@@ -181,10 +181,9 @@ export default function Cadastro() {
           style={styles.picker}
         >
           <Picker.Item label="Selecione o status" value="" />
-          <Picker.Item label="DISPONIVEL" value="DISPONIVEL" />
-          <Picker.Item label="MANUTENCAO" value="MANUTENCAO" />
-          <Picker.Item label="INDISPONIVEL" value="INDISPONIVEL" />
-          <Picker.Item label="RECUPERACAO" value="RECUPERACAO" />
+          {STATUS_OPTIONS.map((status) => (
+            <Picker.Item key={status} label={status} value={status} />
+          ))}
         </Picker>
       </View>
 
@@ -204,29 +203,26 @@ export default function Cadastro() {
 
       <View style={styles.previewBox}>
         <Text style={styles.previewTitle}>📄 Lista de Motos:</Text>
+
         {listaMotos.map((m, index) => (
           <View key={m.id ?? index} style={{ marginBottom: 12 }}>
-            <Text style={styles.previewText}>Modelo: {m.modelo}</Text>
+            {CAMPOS_FORM.map((field) => (
+              <Text key={field} style={styles.previewText}>
+                {`${field[0].toUpperCase() + field.slice(1)}: ${m[field]}`}
+              </Text>
+            ))}
             <Text style={styles.previewText}>Status: {m.status}</Text>
-            <Text style={styles.previewText}>Posição: {m.posicao}</Text>
-            <Text style={styles.previewText}>Problema: {m.problema}</Text>
-            <Text style={styles.previewText}>Placa: {m.placa}</Text>
 
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
               <TouchableOpacity onPress={() => setMoto(m)} style={styles.editButton}>
                 <Text style={{ color: '#fff' }}>Editar</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 onPress={() =>
-                  Alert.alert(
-                    'Excluir Moto',
-                    'Tem certeza que deseja excluir esta moto?',
-                    [
-                      { text: 'Cancelar', style: 'cancel' },
-                      { text: 'Excluir', onPress: () => excluirMoto(m.id), style: 'destructive' },
-                    ]
-                  )
+                  Alert.alert('Excluir Moto', 'Tem certeza que deseja excluir esta moto?', [
+                    { text: 'Cancelar', style: 'cancel' },
+                    { text: 'Excluir', onPress: () => excluirMoto(m.id), style: 'destructive' },
+                  ])
                 }
                 style={[styles.editButton, { backgroundColor: '#aa2222' }]}
               >
