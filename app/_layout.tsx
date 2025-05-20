@@ -26,16 +26,6 @@ export default function Layout() {
       />
 
       <Tabs.Screen
-        name="scanner"
-        options={{
-          title: 'Escanear',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="qr-code-scanner" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
         name="mapa"
         options={{
           title: 'Mapa',

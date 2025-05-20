@@ -19,6 +19,12 @@ type Moto = {
   posicao: string;
   problema: string;
   placa: string;
+  alaId?: number; // <- campo novo
+};
+
+type Ala = {
+  id: number;
+  nome: string;
 };
 
 const CAMPOS_FORM = ['modelo', 'posicao', 'problema', 'placa'] as const;
@@ -31,14 +37,17 @@ export default function Cadastro() {
     posicao: '',
     problema: '',
     placa: '',
+    alaId: undefined,
   });
 
+  const [alas, setAlas] = useState<Ala[]>([]);
   const [listaMotos, setListaMotos] = useState<Moto[]>([]);
   const [ultimaMoto, setUltimaMoto] = useState<Moto | null>(null);
 
   useEffect(() => {
     listarMotos();
     carregarUltimaMoto();
+    carregarAlas(); // novo
   }, []);
 
   const listarMotos = useCallback(async () => {
@@ -62,6 +71,16 @@ export default function Cadastro() {
     }
   }, []);
 
+  const carregarAlas = async () => {
+    try {
+      const res = await fetch('http://10.0.2.2:8080/alas');
+      const data = await res.json();
+      setAlas(data.content || data);
+    } catch (err) {
+      console.error('Erro ao carregar alas', err);
+    }
+  };
+
   const salvarMotosLocal = async (motos: Moto[]) => {
     try {
       await AsyncStorage.setItem('listaMotos', JSON.stringify(motos));
@@ -70,7 +89,7 @@ export default function Cadastro() {
     }
   };
 
-  const handleChange = (field: keyof Moto, value: string) => {
+  const handleChange = (field: keyof Moto, value: any) => {
     setMoto((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -82,6 +101,7 @@ export default function Cadastro() {
       posicao: '',
       problema: '',
       placa: '',
+      alaId: undefined,
     });
   };
 
@@ -90,7 +110,10 @@ export default function Cadastro() {
       const response = await fetch('http://10.0.2.2:8080/motos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(moto),
+        body: JSON.stringify({
+          ...moto,
+          ala: { id: moto.alaId },
+        }),
       });
 
       if (response.ok) {
@@ -118,7 +141,10 @@ export default function Cadastro() {
       const response = await fetch(`http://10.0.2.2:8080/motos/${motoEditada.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(motoEditada),
+        body: JSON.stringify({
+          ...motoEditada,
+          ala: { id: motoEditada.alaId },
+        }),
       });
 
       if (response.ok) {
@@ -173,6 +199,7 @@ export default function Cadastro() {
         />
       ))}
 
+      {/* STATUS */}
       <View style={styles.pickerContainer}>
         <Picker
           selectedValue={moto.status}
@@ -183,6 +210,21 @@ export default function Cadastro() {
           <Picker.Item label="Selecione o status" value="" />
           {STATUS_OPTIONS.map((status) => (
             <Picker.Item key={status} label={status} value={status} />
+          ))}
+        </Picker>
+      </View>
+
+      {/* ALA */}
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={moto.alaId}
+          onValueChange={(value) => handleChange('alaId', value)}
+          dropdownIconColor="#fff"
+          style={styles.picker}
+        >
+          <Picker.Item label="Selecione a Ala" value={undefined} />
+          {alas.map((ala) => (
+            <Picker.Item key={ala.id} label={ala.nome} value={ala.id} />
           ))}
         </Picker>
       </View>
@@ -212,6 +254,7 @@ export default function Cadastro() {
               </Text>
             ))}
             <Text style={styles.previewText}>Status: {m.status}</Text>
+            <Text style={styles.previewText}>Ala ID: {m.alaId ?? '---'}</Text>
 
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
               <TouchableOpacity onPress={() => setMoto(m)} style={styles.editButton}>
@@ -236,91 +279,92 @@ export default function Cadastro() {
   );
 }
 
+// Styles (mantidos os mesmos que você usava)
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: '#000',
-    padding: 20,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 20,
-    color: '#00BFFF',
-    fontWeight: 'bold',
-    marginBottom: 15,
-  },
-  input: {
-    width: '100%',
-    backgroundColor: '#1a1a1a',
-    borderColor: '#333',
-    borderWidth: 1,
-    marginBottom: 10,
-    padding: 12,
-    borderRadius: 8,
-    fontSize: 15,
-    color: '#fff',
-  },
-  pickerContainer: {
-    backgroundColor: '#1a1a1a',
-    borderColor: '#333',
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 10,
-    width: '100%',
-  },
-  picker: {
-    color: '#fff',
-    height: 50,
-    width: '100%',
-  },
-  button: {
-    backgroundColor: '#00BFFF',
-    padding: 14,
-    borderRadius: 10,
-    width: '100%',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  clearButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#444',
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  clearButtonText: {
-    color: '#fff',
-    marginLeft: 6,
-    fontSize: 15,
-  },
-  previewBox: {
-    marginTop: 25,
-    backgroundColor: '#111',
-    padding: 15,
-    borderRadius: 10,
-    width: '100%',
-  },
-  previewTitle: {
-    color: '#00BFFF',
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  previewText: {
-    color: '#ccc',
-    fontSize: 14,
-    marginBottom: 3,
-  },
-  editButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: '#555',
-    borderRadius: 6,
-  },
+    container: {
+      flexGrow: 1,
+      backgroundColor: '#000',
+      padding: 20,
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: 20,
+      color: '#00BFFF',
+      fontWeight: 'bold',
+      marginBottom: 15,
+    },
+    input: {
+      width: '100%',
+      backgroundColor: '#1a1a1a',
+      borderColor: '#333',
+      borderWidth: 1,
+      marginBottom: 10,
+      padding: 12,
+      borderRadius: 8,
+      fontSize: 15,
+      color: '#fff',
+    },
+    pickerContainer: {
+      backgroundColor: '#1a1a1a',
+      borderColor: '#333',
+      borderWidth: 1,
+      borderRadius: 8,
+      marginBottom: 10,
+      width: '100%',
+    },
+    picker: {
+      color: '#fff',
+      height: 50,
+      width: '100%',
+    },
+    button: {
+      backgroundColor: '#00BFFF',
+      padding: 14,
+      borderRadius: 10,
+      width: '100%',
+      marginTop: 10,
+    },
+    buttonText: {
+      color: '#fff',
+      textAlign: 'center',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    clearButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#444',
+      padding: 10,
+      borderRadius: 8,
+      marginTop: 10,
+    },
+    clearButtonText: {
+      color: '#fff',
+      marginLeft: 6,
+      fontSize: 15,
+    },
+    previewBox: {
+      marginTop: 25,
+      backgroundColor: '#111',
+      padding: 15,
+      borderRadius: 10,
+      width: '100%',
+    },
+    previewTitle: {
+      color: '#00BFFF',
+      fontSize: 15,
+      fontWeight: 'bold',
+      marginBottom: 10,
+    },
+    previewText: {
+      color: '#ccc',
+      fontSize: 14,
+      marginBottom: 3,
+    },
+    editButton: {
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      backgroundColor: '#555',
+      borderRadius: 6,
+    },
 });
