@@ -9,7 +9,7 @@ export default function HomeScreen() {
         style={styles.logo}
         resizeMode="contain"
       />
-      <Text style={styles.title}>Bem-vindo ao MotoMap</Text>
+      <Text style={styles.title}>Bem-vindo ao MotoApp</Text>
       <Text style={styles.subtitle}>Use a barra inferior para navegar</Text>
     </View>
   );
