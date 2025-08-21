@@ -19,7 +19,8 @@ type Moto = {
   posicao: string;
   problema: string;
   placa: string;
-  alaId?: number; // <- campo novo
+  alaId?: number;
+  id_tag?: string; // <- novo campo
 };
 
 type Ala = {
@@ -38,6 +39,7 @@ export default function Cadastro() {
     problema: '',
     placa: '',
     alaId: undefined,
+    id_tag: '',
   });
 
   const [alas, setAlas] = useState<Ala[]>([]);
@@ -47,7 +49,7 @@ export default function Cadastro() {
   useEffect(() => {
     listarMotos();
     carregarUltimaMoto();
-    carregarAlas(); // novo
+    carregarAlas();
   }, []);
 
   const listarMotos = useCallback(async () => {
@@ -102,24 +104,29 @@ export default function Cadastro() {
       problema: '',
       placa: '',
       alaId: undefined,
+      id_tag: '',
     });
   };
 
   const cadastrarMoto = async () => {
     try {
+      // gera id_tag automático
+      const motoComIdTag = { 
+        ...moto, 
+        id_tag: moto.id_tag || Date.now().toString(),
+        ala: { id: moto.alaId }
+      };
+
       const response = await fetch('http://10.0.2.2:8080/motos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...moto,
-          ala: { id: moto.alaId },
-        }),
+        body: JSON.stringify(motoComIdTag),
       });
 
       if (response.ok) {
         Alert.alert('Sucesso', 'Moto cadastrada com sucesso!');
-        await AsyncStorage.setItem('ultimaMoto', JSON.stringify(moto));
-        setUltimaMoto(moto);
+        await AsyncStorage.setItem('ultimaMoto', JSON.stringify(motoComIdTag));
+        setUltimaMoto(motoComIdTag);
         limparCampos();
         listarMotos();
       } else {
@@ -255,6 +262,7 @@ export default function Cadastro() {
             ))}
             <Text style={styles.previewText}>Status: {m.status}</Text>
             <Text style={styles.previewText}>Ala ID: {m.alaId ?? '---'}</Text>
+            <Text style={styles.previewText}>ID_TAG: {m.id_tag ?? '---'}</Text>
 
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
               <TouchableOpacity onPress={() => setMoto(m)} style={styles.editButton}>
@@ -279,92 +287,92 @@ export default function Cadastro() {
   );
 }
 
-// Styles (mantidos os mesmos que você usava)
+// Styles
 const styles = StyleSheet.create({
-    container: {
-      flexGrow: 1,
-      backgroundColor: '#000',
-      padding: 20,
-      alignItems: 'center',
-    },
-    title: {
-      fontSize: 20,
-      color: '#00BFFF',
-      fontWeight: 'bold',
-      marginBottom: 15,
-    },
-    input: {
-      width: '100%',
-      backgroundColor: '#1a1a1a',
-      borderColor: '#333',
-      borderWidth: 1,
-      marginBottom: 10,
-      padding: 12,
-      borderRadius: 8,
-      fontSize: 15,
-      color: '#fff',
-    },
-    pickerContainer: {
-      backgroundColor: '#1a1a1a',
-      borderColor: '#333',
-      borderWidth: 1,
-      borderRadius: 8,
-      marginBottom: 10,
-      width: '100%',
-    },
-    picker: {
-      color: '#fff',
-      height: 50,
-      width: '100%',
-    },
-    button: {
-      backgroundColor: '#00BFFF',
-      padding: 14,
-      borderRadius: 10,
-      width: '100%',
-      marginTop: 10,
-    },
-    buttonText: {
-      color: '#fff',
-      textAlign: 'center',
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    clearButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#444',
-      padding: 10,
-      borderRadius: 8,
-      marginTop: 10,
-    },
-    clearButtonText: {
-      color: '#fff',
-      marginLeft: 6,
-      fontSize: 15,
-    },
-    previewBox: {
-      marginTop: 25,
-      backgroundColor: '#111',
-      padding: 15,
-      borderRadius: 10,
-      width: '100%',
-    },
-    previewTitle: {
-      color: '#00BFFF',
-      fontSize: 15,
-      fontWeight: 'bold',
-      marginBottom: 10,
-    },
-    previewText: {
-      color: '#ccc',
-      fontSize: 14,
-      marginBottom: 3,
-    },
-    editButton: {
-      paddingHorizontal: 10,
-      paddingVertical: 5,
-      backgroundColor: '#555',
-      borderRadius: 6,
-    },
+  container: {
+    flexGrow: 1,
+    backgroundColor: '#000',
+    padding: 20,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 20,
+    color: '#00BFFF',
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  input: {
+    width: '100%',
+    backgroundColor: '#1a1a1a',
+    borderColor: '#333',
+    borderWidth: 1,
+    marginBottom: 10,
+    padding: 12,
+    borderRadius: 8,
+    fontSize: 15,
+    color: '#fff',
+  },
+  pickerContainer: {
+    backgroundColor: '#1a1a1a',
+    borderColor: '#333',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 10,
+    width: '100%',
+  },
+  picker: {
+    color: '#fff',
+    height: 50,
+    width: '100%',
+  },
+  button: {
+    backgroundColor: '#00BFFF',
+    padding: 14,
+    borderRadius: 10,
+    width: '100%',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  clearButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#444',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  clearButtonText: {
+    color: '#fff',
+    marginLeft: 6,
+    fontSize: 15,
+  },
+  previewBox: {
+    marginTop: 25,
+    backgroundColor: '#111',
+    padding: 15,
+    borderRadius: 10,
+    width: '100%',
+  },
+  previewTitle: {
+    color: '#00BFFF',
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  previewText: {
+    color: '#ccc',
+    fontSize: 14,
+    marginBottom: 3,
+  },
+  editButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#555',
+    borderRadius: 6,
+  },
 });
