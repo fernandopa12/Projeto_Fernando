@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  Modal
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Modal
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   createUserWithEmailAndPassword,
+  updateProfile
 } from 'firebase/auth';
 import { auth } from '../service/firebaseConfig';
+import { useAuth } from '../src/context/AuthContext';
+
+const FIRST_TAB_ROUTE = '/cadastro'; // <<< troque aqui se quiser outra aba inicial
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -30,21 +27,14 @@ export default function LoginScreen() {
   const [senhaCadastro, setSenhaCadastro] = useState('');
 
   const router = useRouter();
+  const { isLogged, login } = useAuth();
 
+  // ✅ Se já estiver logado (cache/auto-login), vai direto para a navegação
   useEffect(() => {
-    const verificarUsuarioLogado = async () => {
-      try {
-        const usuarioSalvo = await AsyncStorage.getItem('@user');
-        if (usuarioSalvo) {
-          router.push('/HomeScreen');
-        }
-      } catch (error) {
-        console.log('Erro ao verificar login', error);
-      }
-    };
-
-    verificarUsuarioLogado();
-  }, []);
+    if (isLogged) {
+      router.replace(FIRST_TAB_ROUTE);
+    }
+  }, [isLogged]);
 
   const handleLogin = () => {
     if (!email || !senha) {
@@ -55,8 +45,8 @@ export default function LoginScreen() {
     signInWithEmailAndPassword(auth, email, senha)
       .then(async (userCredential) => {
         const user = userCredential.user;
-        await AsyncStorage.setItem('@user', JSON.stringify(user));
-        router.push('/HomeScreen');
+        await login(user);                 // salva no contexto/AsyncStorage
+        router.replace(FIRST_TAB_ROUTE);   // ✅ vai para a navegação (abas aparecem)
       })
       .catch((error) => {
         console.log('Error:', error.message);
@@ -69,7 +59,6 @@ export default function LoginScreen() {
       Alert.alert('Atenção', 'Digite seu email para redefinir a senha!');
       return;
     }
-
     try {
       await sendPasswordResetEmail(auth, emailReset);
       Alert.alert('Sucesso', '📩 Email enviado para redefinir sua senha!');
@@ -90,9 +79,16 @@ export default function LoginScreen() {
     createUserWithEmailAndPassword(auth, emailCadastro, senhaCadastro)
       .then(async (userCredential) => {
         const user = userCredential.user;
-        await AsyncStorage.setItem('@user', JSON.stringify(user));
+
+        try {
+          await updateProfile(user, { displayName: nome.trim() });
+        } catch {
+          // se falhar, mantemos o nome localmente via login(..., nome)
+        }
+
+        await login(user, nome);           // aceita 2º arg opcional (AuthContext ajustado)
         setCadastroVisible(false);
-        router.push('/HomeScreen');
+        router.replace(FIRST_TAB_ROUTE);   // ✅ mostra as abas imediatamente
       })
       .catch((error) => {
         console.log(error.message);
@@ -230,67 +226,28 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    padding: 20,
+    flex: 1, backgroundColor: '#000', justifyContent: 'center', padding: 20,
   },
   titulo: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 30,
-    textAlign: 'center',
+    fontSize: 28, fontWeight: 'bold', color: '#fff', marginBottom: 30, textAlign: 'center',
   },
   input: {
-    backgroundColor: '#1a1a1a',
-    color: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#333',
+    backgroundColor: '#1a1a1a', color: '#fff', borderRadius: 10, padding: 15, marginBottom: 15,
+    fontSize: 16, borderWidth: 1, borderColor: '#333',
   },
   botao: {
-    backgroundColor: '#00BFFF',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
+    backgroundColor: '#00BFFF', padding: 15, borderRadius: 10, alignItems: 'center',
   },
   textoBotao: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: '#fff', fontSize: 18, fontWeight: 'bold',
   },
-  link: {
-    marginTop: 20,
-    color: '#00BFFF',
-    textAlign: 'center',
-    fontSize: 15,
-  },
+  link: { marginTop: 20, color: '#00BFFF', textAlign: 'center', fontSize: 15 },
   modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    padding: 20,
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20,
   },
-  box: {
-    backgroundColor: '#1a1a1a',
-    padding: 25,
-    borderRadius: 15,
-  },
+  box: { backgroundColor: '#1a1a1a', padding: 25, borderRadius: 15 },
   tituloModal: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#00BFFF',
-    marginBottom: 10,
-    textAlign: 'center',
+    fontSize: 24, fontWeight: 'bold', color: '#00BFFF', marginBottom: 10, textAlign: 'center',
   },
-  subtituloModal: {
-    fontSize: 15,
-    color: '#ccc',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
+  subtituloModal: { fontSize: 15, color: '#ccc', marginBottom: 20, textAlign: 'center' },
 });
